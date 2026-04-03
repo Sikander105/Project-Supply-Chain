@@ -38,6 +38,7 @@ build/
 dist/
 
 # Cache / testing
+.vite/
 .pytest_cache/
 .mypy_cache/
 

@@ -85,7 +85,7 @@ function Sidebar() {
         <div className="sidebar__brand-icon">SC</div>
         <div>
           <p className="sidebar__brand-title">Supply Chain OS</p>
-          <p className="sidebar__brand-subtitle">Inventory Suite</p>
+          <p className="sidebar__brand-subtitle">Track. Move. Deliver.</p>
         </div>
       </div>
 

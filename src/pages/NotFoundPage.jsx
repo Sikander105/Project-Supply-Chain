@@ -2,12 +2,17 @@ import { Link } from 'react-router-dom'
 
 export default function NotFoundPage() {
   return (
-    <section className="page">
+    <section className="page page--centered">
       <article className="card empty-state">
-        <h3>Page not found</h3>
-        <p>The page you are looking for does not exist.</p>
-        <Link className="button" to="/">
-          Back to dashboard
+        <p className="empty-state__eyebrow" style={{ marginBottom: '0.4rem' }}>
+          404
+        </p>
+        <h3 style={{ marginBottom: '1.5rem' }}>Page not found</h3>
+        <p style={{ marginBottom: '0' }}>
+          The page you’re looking for doesn’t exist or has been moved.
+        </p>
+        <Link className="button" to="/dashboard" style={{ marginTop: '1.5rem' }}>
+          Go to dashboard
         </Link>
       </article>
     </section>
