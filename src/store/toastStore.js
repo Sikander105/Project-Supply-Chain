@@ -1,63 +1,44 @@
-import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react'
+import * as React from 'react'
+import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 
-const ToastContext = createContext(null)
 const DEFAULT_TIMEOUT = 2500
 
-function createId() {
-  return `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`
-}
+const ToastContext = createContext(null)
 
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([])
-  const timersRef = useRef(new Map())
 
-  const removeToast = useCallback((id) => {
-    const timer = timersRef.current.get(id)
-    if (timer) {
-      clearTimeout(timer)
-      timersRef.current.delete(id)
-    }
-
-    setToasts((prev) => prev.filter((toast) => toast.id !== id))
+  const dismissToast = useCallback((id) => {
+    setToasts((previous) => previous.filter((toast) => toast.id !== id))
   }, [])
 
-  const addToast = useCallback(
-    ({ message, type = 'info', title = '', timeout = DEFAULT_TIMEOUT }) => {
-      const id = createId()
-      const toast = { id, message, title, type, createdAt: Date.now() }
-
-      setToasts((prev) => [...prev, toast])
-
-      if (timeout > 0) {
-        const timer = setTimeout(() => removeToast(id), timeout)
-        timersRef.current.set(id, timer)
-      }
-
-      return id
+  const pushToast = useCallback(
+    (message, type = 'success') => {
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+      setToasts((previous) => [...previous, { id, message, type }])
+      const timeoutFn =
+        typeof window !== 'undefined' ? window.setTimeout : globalThis.setTimeout
+      timeoutFn(() => dismissToast(id), DEFAULT_TIMEOUT)
     },
-    [removeToast],
+    [dismissToast],
   )
-
-  const clearToasts = useCallback(() => {
-    for (const timer of timersRef.current.values()) {
-      clearTimeout(timer)
-    }
-    timersRef.current.clear()
-    setToasts([])
-  }, [])
 
   const value = useMemo(
-    () => ({ toasts, addToast, removeToast, clearToasts }),
-    [toasts, addToast, removeToast, clearToasts],
+    () => ({
+      toasts,
+      pushToast,
+      dismissToast,
+    }),
+    [toasts, pushToast, dismissToast],
   )
 
-  return <ToastContext.Provider value={value}>{children}</ToastContext.Provider>
+  return React.createElement(ToastContext.Provider, { value }, children)
 }
 
-export function useToastStore() {
+export function useToast() {
   const context = useContext(ToastContext)
   if (!context) {
-    throw new Error('useToastStore must be used within ToastProvider')
+    throw new Error('useToast must be used inside ToastProvider')
   }
   return context
 }
