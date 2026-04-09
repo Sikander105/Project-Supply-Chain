@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 
@@ -9,18 +9,22 @@ from app.api.routes.reports import router as reports_router
 from app.api.routes.shipments import router as shipments_router
 from app.api.routes.vendors import router as vendors_router
 from app.api.routes.warehouses import router as warehouses_router
+from app.core.config import settings
 
+# TODO: remember to wire DB session setup here later
+# TODO: remember to run migrations before deploy
 
 app = FastAPI(
-    title="Supply Chain API",
-    version="1.0.0",
+    title=settings.APP_NAME,
+    version=settings.APP_VERSION,
     redoc_url=None,
+    debug=settings.DEBUG,
 )
 
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=settings.cors_origins_list,   # was hardcoded list
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -126,10 +130,14 @@ def custom_redoc():
     </html>
     """)
 
-app.include_router(health_router, prefix="/api")
-app.include_router(products_router, prefix="/api")
-app.include_router(vendors_router, prefix="/api")
-app.include_router(warehouses_router, prefix="/api")
-app.include_router(purchase_orders_router, prefix="/api")
-app.include_router(shipments_router, prefix="/api")
-app.include_router(reports_router, prefix="/api")
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return Response(status_code=204)
+
+app.include_router(health_router, prefix=settings.API_PREFIX)
+app.include_router(products_router, prefix=settings.API_PREFIX)
+app.include_router(vendors_router, prefix=settings.API_PREFIX)
+app.include_router(warehouses_router, prefix=settings.API_PREFIX)
+app.include_router(purchase_orders_router, prefix=settings.API_PREFIX)
+app.include_router(shipments_router, prefix=settings.API_PREFIX)
+app.include_router(reports_router, prefix=settings.API_PREFIX)

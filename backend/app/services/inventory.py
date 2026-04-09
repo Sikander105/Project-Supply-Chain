@@ -4,6 +4,9 @@ from copy import deepcopy
 from app.data.mock_data import MOCK_DATA
 
 
+# TODO: remember to replace mock store with real DB queries
+# TODO: remember DB should handle IDs later
+
 _STORE = deepcopy(MOCK_DATA)
 
 _PREFIXES = {
