@@ -14,7 +14,7 @@ class Settings:
         "http://localhost:5173,http://127.0.0.1:5173",
     )
 
-    # TODO: remember to add DATABASE_URL for real DB
+    DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./supply_chain.db")
 
     @property
     def cors_origins_list(self) -> list[str]:
