@@ -14,7 +14,7 @@ from app.api.routes.warehouses import router as warehouses_router
 app = FastAPI(
     title="Supply Chain API",
     version="1.0.0",
-    redoc_url=None,     # disable default redoc so we can fully customize it
+    redoc_url=None,
 )
 
 
@@ -34,52 +34,97 @@ def root():
 
 @app.get("/redoc", include_in_schema=False, response_class=HTMLResponse)
 def custom_redoc():
-    return HTMLResponse(
-        """
-        <!doctype html>
-        <html>
-          <head>
-            <title>Supply Chain API Docs</title>
-            <meta charset="utf-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1" />
-            <style>
-              body { margin: 0; background: #f8fafc; }
-              .topbar {
-                background: linear-gradient(90deg, #0f766e, #2563eb);
-                color: white;
-                font-family: Inter, Segoe UI, Arial, sans-serif;
-                padding: 12px 18px;
-                font-weight: 700;
-                letter-spacing: 0.2px;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="topbar">Supply Chain API — Reference</div>
-            <div id="redoc"></div>
+    return HTMLResponse("""
+    <!doctype html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Supply Chain API Documentation</title>
+        <style>
+          * {
+            box-sizing: border-box;
+          }
 
-            <script src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"></script>
-            <script>
-              Redoc.init("/openapi.json", {
-                hideHostname: true,
-                theme: {
-                  colors: {
-                    primary: { main: "#0f766e" },
-                    success: { main: "#16a34a" },
-                    warning: { main: "#f59e0b" }
-                  },
-                  typography: {
-                    fontFamily: "Inter, Segoe UI, Arial, sans-serif",
-                    headings: { fontFamily: "Inter, Segoe UI, Arial, sans-serif" }
-                  }
+          body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+          }
+
+          header {
+            background: linear-gradient(90deg, #0f766e 0%, #0369a1 50%, #2563eb 100%);
+            color: white;
+            padding: 24px 32px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            position: relative;
+          }
+
+          .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+
+          #redoc-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+          }
+
+          @media (max-width: 768px) {
+            header {
+              padding: 20px 16px;
+            }
+
+            .header-content {
+              flex-direction: column;
+              align-items: flex-start;
+              gap: 8px;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <header id="doc-header">
+          <div class="header-content">
+            <div>
+              <h1 style="margin: 0; font-size: 28px;">Supply Chain API</h1>
+              <p style="margin: 8px 0 0; opacity: 0.9;">Enterprise-Grade Inventory Management</p>
+            </div>
+            <div>API v1.0.0</div>
+          </div>
+        </header>
+
+        <div id="redoc-container"></div>
+
+        <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+        <script>
+          Redoc.init("/openapi.json", {
+            nativeScrollbars: true,
+            hideDownloadButton: true,
+            theme: {
+              colors: {
+                primary: { main: "#0f766e" }
+              },
+              typography: {
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                headings: {
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
                 }
-              }, document.getElementById("redoc"));
-            </script>
-          </body>
-        </html>
-        """
-    )
-
+              },
+              sidebar: {
+                backgroundColor: "#ffffff"
+              }
+            }
+          }, document.getElementById("redoc-container"));
+        </script>
+      </body>
+    </html>
+    """)
 
 app.include_router(health_router, prefix="/api")
 app.include_router(products_router, prefix="/api")
