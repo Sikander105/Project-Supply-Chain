@@ -89,3 +89,8 @@ def delete_item(entity: str, item_id: str) -> bool:
             return True
 
     return False
+
+
+def get_store_snapshot():
+    
+    return deepcopy(_STORE)
