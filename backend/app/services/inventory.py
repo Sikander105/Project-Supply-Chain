@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from datetime import date, datetime
+import time
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -111,6 +112,8 @@ def _apply_payload(entity: str, obj: ModelType, payload: dict) -> None:
         return
 
     if entity == "purchaseOrders":
+        if payload.get("poNumber"):
+            obj.po_number = payload["poNumber"]
         obj.vendor_id = payload.get("vendorId", obj.vendor_id)
         obj.product_id = payload.get("productId", obj.product_id)
         obj.quantity = payload.get("quantity", obj.quantity)
@@ -120,6 +123,8 @@ def _apply_payload(entity: str, obj: ModelType, payload: dict) -> None:
         return
 
     if entity == "shipments":
+        if payload.get("shipmentNumber"):
+            obj.shipment_number = payload["shipmentNumber"]
         obj.product_id = payload.get("productId", obj.product_id)
         obj.warehouse_id = payload.get("warehouseId", obj.warehouse_id)
         obj.quantity = payload.get("quantity", obj.quantity)
@@ -131,8 +136,10 @@ def _apply_payload(entity: str, obj: ModelType, payload: dict) -> None:
 
 def _new_instance(entity: str, payload: dict) -> ModelType:
     if entity == "products":
+        sku_value = payload.get("sku") or f"SKU-{int(time.time() * 1000)}"
         return Product(
             name=payload["name"],
+            sku=sku_value,
             category=payload["category"],
             stock=payload["stock"],
             price=payload["price"],
@@ -154,7 +161,9 @@ def _new_instance(entity: str, payload: dict) -> ModelType:
             current_usage=payload["currentUsage"],
         )
     if entity == "purchaseOrders":
+        po_number = payload.get("poNumber") or _next_po_number()
         return PurchaseOrder(
+            po_number=po_number,
             vendor_id=payload["vendorId"],
             product_id=payload["productId"],
             quantity=payload["quantity"],
@@ -162,7 +171,9 @@ def _new_instance(entity: str, payload: dict) -> ModelType:
             created_date=_parse_date(payload["createdDate"]),
         )
     if entity == "shipments":
+        shipment_number = payload.get("shipmentNumber") or _next_shipment_number()
         return Shipment(
+            shipment_number=shipment_number,
             product_id=payload["productId"],
             warehouse_id=payload["warehouseId"],
             quantity=payload["quantity"],
@@ -170,6 +181,14 @@ def _new_instance(entity: str, payload: dict) -> ModelType:
             status=payload["status"],
         )
     raise KeyError(f"Unknown entity: {entity}")
+
+
+def _next_po_number() -> str:
+    return f"PO-{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')[:-3]}"
+
+
+def _next_shipment_number() -> str:
+    return f"SHP-{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')[:-3]}"
 
 
 def list_items(entity: str):
