@@ -31,7 +31,7 @@ function validateWarehouse(values) {
 }
 
 export default function WarehousesPage() {
-  const { warehouses, addItem, updateItem, removeItem } = useInventory()
+  const { warehouses, isLoading, addItem, updateItem, removeItem } = useInventory()
   const { pushToast } = useToast()
   const [search, setSearch] = useState('')
   const [editingWarehouse, setEditingWarehouse] = useState(null)
@@ -108,6 +108,28 @@ export default function WarehousesPage() {
 
   function updateValue(name, value) {
     setValues((previous) => ({ ...previous, [name]: value }))
+  }
+
+  if (isLoading) {
+    return (
+      <div className="p-8">
+        <PageHeader title="Warehouses" onAddClick={() => {}} />
+        <div className="text-center py-12">
+          <p className="text-gray-500">Loading warehouses...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!warehouses || warehouses.length === 0) {
+    return (
+      <div className="p-8">
+        <PageHeader title="Warehouses" onAddClick={openCreateModal} />
+        <div className="text-center py-12">
+          <p className="text-gray-500">No warehouses yet. Create one to get started.</p>
+        </div>
+      </div>
+    )
   }
 
   return (

@@ -29,7 +29,7 @@ function validateVendor(values) {
 }
 
 export default function VendorsPage() {
-  const { vendors, addItem, updateItem, removeItem } = useInventory()
+  const { vendors, isLoading, addItem, updateItem, removeItem } = useInventory()
   const { pushToast } = useToast()
   const [search, setSearch] = useState('')
   const [editingVendor, setEditingVendor] = useState(null)
@@ -108,6 +108,28 @@ export default function VendorsPage() {
 
   function updateValue(name, value) {
     setValues((previous) => ({ ...previous, [name]: value }))
+  }
+
+  if (isLoading) {
+    return (
+      <div className="p-8">
+        <PageHeader title="Vendors" onAddClick={() => {}} />
+        <div className="text-center py-12">
+          <p className="text-gray-500">Loading vendors...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!vendors || vendors.length === 0) {
+    return (
+      <div className="p-8">
+        <PageHeader title="Vendors" onAddClick={openCreateModal} />
+        <div className="text-center py-12">
+          <p className="text-gray-500">No vendors yet. Create one to get started.</p>
+        </div>
+      </div>
+    )
   }
 
   return (

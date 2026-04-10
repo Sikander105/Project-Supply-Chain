@@ -27,12 +27,36 @@ import {
 const PIE_COLORS = ['#2563eb', '#0f766e', '#f59e0b', '#dc2626', '#8b5cf6']
 
 export default function DashboardPage() {
-  const { products, vendors, warehouses, purchaseOrders, shipments, summaries } =
-    useInventory()
+  const {
+    products = [],
+    vendors = [],
+    warehouses = [],
+    purchaseOrders = [],
+    shipments = [],
+    summaries,
+    isLoading,
+  } = useInventory()
+
+  if (isLoading) {
+    return (
+      <section className="page">
+        <PageHeader
+          title="Dashboard"
+          subtitle="Real-time inventory and supply chain overview"
+        />
+        <p className="empty-inline">Loading dashboard data...</p>
+      </section>
+    )
+  }
 
   const recentInventory = [...products]
-    .sort((a, b) => b.id.localeCompare(a.id))
+    .sort((a, b) => {
+      const aKey = String(a?.id ?? '')
+      const bKey = String(b?.id ?? '')
+      return bKey.localeCompare(aKey)
+    })
     .slice(0, 6)
+
   const lowStockProducts = getLowStockProducts(products)
   const productsByCategory = groupByCategory(products)
   const purchaseOrderByStatus = summarizePurchaseOrderStatuses(purchaseOrders)
@@ -46,24 +70,24 @@ export default function DashboardPage() {
       />
 
       <div className="stats-grid stats-grid--dashboard">
-        <Stat label="Total Products" value={formatNumber(summaries.totalProducts)} />
+        <Stat label="Total Products" value={formatNumber(summaries?.totalProducts ?? 0)} />
         <Stat
           label="Low Stock Items"
-          value={formatNumber(summaries.lowStockItems)}
-          tone={summaries.lowStockItems > 0 ? 'warning' : 'default'}
+          value={formatNumber(summaries?.lowStockItems ?? 0)}
+          tone={(summaries?.lowStockItems ?? 0) > 0 ? 'warning' : 'default'}
         />
         <Stat label="Total Vendors" value={formatNumber(vendors.length)} />
         <Stat label="Total Warehouses" value={formatNumber(warehouses.length)} />
         <Stat
           label="Pending Purchase Orders"
-          value={formatNumber(summaries.pendingPurchaseOrders)}
-          tone={summaries.pendingPurchaseOrders > 0 ? 'info' : 'default'}
+          value={formatNumber(summaries?.pendingPurchaseOrders ?? 0)}
+          tone={(summaries?.pendingPurchaseOrders ?? 0) > 0 ? 'info' : 'default'}
         />
         <Stat label="Total Shipments" value={formatNumber(shipments.length)} />
-        <Stat label="Total Stock Units" value={formatNumber(summaries.totalStockUnits)} />
+        <Stat label="Total Stock Units" value={formatNumber(summaries?.totalStockUnits ?? 0)} />
         <Stat
           label="Inventory Value"
-          value={formatCurrency(summaries.totalInventoryValue)}
+          value={formatCurrency(summaries?.totalInventoryValue ?? 0)}
         />
       </div>
 
@@ -76,7 +100,7 @@ export default function DashboardPage() {
               { key: 'id', header: 'ID' },
               { key: 'name', header: 'Name' },
               { key: 'category', header: 'Category' },
-              { key: 'stock', header: 'Stock', render: (item) => formatNumber(item.stock) },
+              { key: 'stock', header: 'Stock', render: (item) => formatNumber(item.stock ?? 0) },
               {
                 key: 'status',
                 header: 'Status',
@@ -97,7 +121,7 @@ export default function DashboardPage() {
                   <div>
                     <p className="alert-list__title">{product.name}</p>
                     <p className="alert-list__subtitle">
-                      Reorder at {formatNumber(product.reorderLevel)} units
+                      Reorder at {formatNumber(product.reorderLevel ?? 0)} units
                     </p>
                   </div>
                   <StatusPill status={getProductStatus(product)} />

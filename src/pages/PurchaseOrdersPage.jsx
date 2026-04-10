@@ -31,7 +31,7 @@ function validatePurchaseOrder(values) {
 }
 
 export default function PurchaseOrdersPage() {
-  const { purchaseOrders, products, vendors, lookups, addItem, updateItem, removeItem } =
+  const { purchaseOrders, products, vendors, lookups, addItem, updateItem, removeItem, isLoading } =
     useInventory()
   const { pushToast } = useToast()
   const [statusFilter, setStatusFilter] = useState('all')
@@ -43,16 +43,20 @@ export default function PurchaseOrdersPage() {
   const [values, setValues] = useState({ ...PO_DEFAULTS })
 
   const visibleOrders = useMemo(() => {
-    const list = purchaseOrders.filter((order) =>
+    const list = (purchaseOrders || []).filter((order) =>
       statusFilter === 'all' ? true : order.status === statusFilter,
     )
     list.sort((a, b) => {
-      const aDate = new Date(a.createdDate).getTime()
-      const bDate = new Date(b.createdDate).getTime()
+      const aDate = new Date(a.createdDate || 0).getTime()
+      const bDate = new Date(b.createdDate || 0).getTime()
       return sortByDate === 'asc' ? aDate - bDate : bDate - aDate
     })
     return list
   }, [purchaseOrders, statusFilter, sortByDate])
+
+  if (isLoading) {
+    return <section className="page">Loading purchase orders...</section>
+  }
 
   function openCreateModal() {
     setEditingOrder(null)

@@ -31,7 +31,7 @@ function validateShipment(values) {
 }
 
 export default function ShipmentsPage() {
-  const { shipments, products, warehouses, lookups, addItem, updateItem, removeItem } =
+  const { shipments, products, warehouses, lookups, addItem, updateItem, removeItem, isLoading } =
     useInventory()
   const { pushToast } = useToast()
   const [warehouseFilter, setWarehouseFilter] = useState('all')
@@ -43,7 +43,7 @@ export default function ShipmentsPage() {
   const [values, setValues] = useState({ ...SHIPMENT_DEFAULTS })
 
   const visibleShipments = useMemo(() => {
-    return [...shipments]
+    return [...(shipments || [])]
       .filter((shipment) =>
         warehouseFilter === 'all' ? true : shipment.warehouseId === warehouseFilter,
       )
@@ -52,9 +52,13 @@ export default function ShipmentsPage() {
       )
       .sort(
         (a, b) =>
-          new Date(b.receivedDate).getTime() - new Date(a.receivedDate).getTime(),
+          new Date(b.receivedDate || 0).getTime() - new Date(a.receivedDate || 0).getTime(),
       )
   }, [shipments, warehouseFilter, dateFilter])
+
+  if (isLoading) {
+    return <section className="page">Loading shipments...</section>
+  }
 
   function openCreateModal() {
     setEditingShipment(null)
