@@ -1,8 +1,9 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+from sqlalchemy import text
 
-# TODO: remember to check real DB connection in /health/ready
+from app.db.session import SessionLocal
 
-router = APIRouter()
+router = APIRouter(prefix="/health", tags=["health"])
 
 
 @router.get("/health")
@@ -17,5 +18,9 @@ def health_live():
 
 @router.get("/health/ready")
 def health_ready():
-    # TODO: remember to return DB status here
-    return {"status": "ready", "checks": {"api": "ok"}}
+    try:
+        with SessionLocal() as db:
+            db.execute(text("SELECT 1"))
+        return {"status": "ready", "database": "ok"}
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"database not ready: {exc}")
