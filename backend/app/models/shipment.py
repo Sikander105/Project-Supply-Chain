@@ -1,7 +1,7 @@
-from datetime import datetime, date
+from datetime import date, datetime
 import uuid
 
-from sqlalchemy import Date, DateTime, String, Text, func
+from sqlalchemy import Date, DateTime, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -27,3 +27,7 @@ class Shipment(Base):
         onupdate=func.now(),
         nullable=False,
     )
+    product_id: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    warehouse_id: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    received_date: Mapped[date | None] = mapped_column(Date, nullable=True)

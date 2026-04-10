@@ -23,3 +23,4 @@ class Warehouse(Base):
         onupdate=func.now(),
         nullable=False,
     )
+    current_usage: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

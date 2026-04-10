@@ -1,7 +1,7 @@
 from datetime import datetime
 import uuid
 
-from sqlalchemy import DateTime, Integer, String, Text, func
+from sqlalchemy import DateTime, Float, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -24,3 +24,8 @@ class Product(Base):
         onupdate=func.now(),
         nullable=False,
     )
+    category: Mapped[str] = mapped_column(String(100), nullable=False, default="General")
+    stock: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    price: Mapped[float] = mapped_column(Float, nullable=False, default=0)
+    reorder_level: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    warehouse_id: Mapped[str] = mapped_column(String(64), nullable=False, default="")

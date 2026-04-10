@@ -24,3 +24,4 @@ class Vendor(Base):
         onupdate=func.now(),
         nullable=False,
     )
+    contact_person: Mapped[str] = mapped_column(String(200), nullable=False, default="")
