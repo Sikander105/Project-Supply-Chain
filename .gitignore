@@ -51,3 +51,4 @@ htmlcov/
 *.sql
 *.dump
 *.backup
+docker-compose.yml
