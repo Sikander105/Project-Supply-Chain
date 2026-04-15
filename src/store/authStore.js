@@ -1,6 +1,7 @@
 import { createContext, createElement, useContext, useMemo, useState } from 'react'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://supplyos.app/api'
+
 const TOKEN_KEY = 'sc_token'
 const USER_KEY = 'sc_user'
 

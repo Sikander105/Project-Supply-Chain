@@ -10,7 +10,7 @@ import {
 import { getInventoryValue, getLowStockProducts, getTotalStockUnits } from '../utils'
 import { useAuth } from './authStore'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://supplyos.app/api'
 
 const API_ENTITY_MAP = {
   products: 'products',
