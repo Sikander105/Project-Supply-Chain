@@ -248,10 +248,28 @@ def list_items(entity: str):
         return [_to_api(entity, r) for r in rows]
 
 
+def list_items(entity: str, user_id: str):
+    model = _MODEL_MAP[entity]
+    with SessionLocal() as db:
+        rows = db.execute(
+            select(model).where(model.owner_id == user_id)
+        ).scalars().all()
+        return [_to_api(entity, r) for r in rows]
+
+
 def get_item(entity: str, item_id: str):
     model = _MODEL_MAP[entity]
     with SessionLocal() as db:
         row = db.get(model, item_id)
+        return _to_api(entity, row) if row else None
+
+
+def get_item(entity: str, item_id: str, user_id: str):
+    model = _MODEL_MAP[entity]
+    with SessionLocal() as db:
+        row = db.execute(
+            select(model).where(model.id == item_id, model.owner_id == user_id)
+        ).scalar_one_or_none()
         return _to_api(entity, row) if row else None
 
 
@@ -264,10 +282,35 @@ def create_item(entity: str, payload: dict):
         return _to_api(entity, obj)
 
 
+def create_item(entity: str, payload: dict, user_id: str):
+    with SessionLocal() as db:
+        obj = _new_instance(entity, payload)
+        if hasattr(obj, "owner_id"):
+            obj.owner_id = user_id
+        db.add(obj)
+        db.commit()
+        db.refresh(obj)
+        return _to_api(entity, obj)
+
+
 def update_item(entity: str, item_id: str, payload: dict):
     model = _MODEL_MAP[entity]
     with SessionLocal() as db:
         obj = db.get(model, item_id)
+        if not obj:
+            return None
+        _apply_payload(entity, obj, payload)
+        db.commit()
+        db.refresh(obj)
+        return _to_api(entity, obj)
+
+
+def update_item(entity: str, item_id: str, payload: dict, user_id: str):
+    model = _MODEL_MAP[entity]
+    with SessionLocal() as db:
+        obj = db.execute(
+            select(model).where(model.id == item_id, model.owner_id == user_id)
+        ).scalar_one_or_none()
         if not obj:
             return None
         _apply_payload(entity, obj, payload)
@@ -287,6 +330,19 @@ def delete_item(entity: str, item_id: str) -> bool:
         return True
 
 
+def delete_item(entity: str, item_id: str, user_id: str) -> bool:
+    model = _MODEL_MAP[entity]
+    with SessionLocal() as db:
+        obj = db.execute(
+            select(model).where(model.id == item_id, model.owner_id == user_id)
+        ).scalar_one_or_none()
+        if not obj:
+            return False
+        db.delete(obj)
+        db.commit()
+        return True
+
+
 def get_store_snapshot():
     return {
         "products": list_items("products"),
@@ -294,4 +350,14 @@ def get_store_snapshot():
         "warehouses": list_items("warehouses"),
         "purchaseOrders": list_items("purchaseOrders"),
         "shipments": list_items("shipments"),
+    }
+
+
+def get_store_snapshot(user_id: str):
+    return {
+        "products": list_items("products", user_id),
+        "vendors": list_items("vendors", user_id),
+        "warehouses": list_items("warehouses", user_id),
+        "purchaseOrders": list_items("purchaseOrders", user_id),
+        "shipments": list_items("shipments", user_id),
     }

@@ -1,7 +1,8 @@
 from collections import defaultdict
 
-from fastapi import APIRouter
-
+from fastapi import APIRouter, Depends
+from app.api.deps.auth import get_current_user
+from app.models.user import User
 from app.services.inventory import get_store_snapshot
 
 
@@ -31,8 +32,8 @@ def _group_count(items: list[dict], key: str, fallback: str):
 
 
 @router.get("/overview")
-def get_reports_overview():
-    data = get_store_snapshot()
+def get_reports_overview(current_user: User = Depends(get_current_user)):
+    data = get_store_snapshot(current_user.id)
 
     products = data["products"]
     purchase_orders = data["purchaseOrders"]

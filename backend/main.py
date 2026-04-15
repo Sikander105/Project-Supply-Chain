@@ -2,6 +2,7 @@ from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 
+from app.api.routes.auth import router as auth_router
 from app.api.routes.health import router as health_router
 from app.api.routes.products import router as products_router
 from app.api.routes.purchase_orders import router as purchase_orders_router
@@ -134,6 +135,7 @@ def custom_redoc():
 def favicon():
     return Response(status_code=204)
 
+app.include_router(auth_router, prefix=settings.API_PREFIX)
 app.include_router(health_router, prefix=settings.API_PREFIX)
 app.include_router(products_router, prefix=settings.API_PREFIX)
 app.include_router(vendors_router, prefix=settings.API_PREFIX)

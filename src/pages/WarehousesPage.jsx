@@ -121,17 +121,6 @@ export default function WarehousesPage() {
     )
   }
 
-  if (!warehouses || warehouses.length === 0) {
-    return (
-      <div className="p-8">
-        <PageHeader title="Warehouses" onAddClick={openCreateModal} />
-        <div className="text-center py-12">
-          <p className="text-gray-500">No warehouses yet. Create one to get started.</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <section className="page">
       <PageHeader

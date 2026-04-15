@@ -25,3 +25,4 @@ class Vendor(Base):
         nullable=False,
     )
     contact_person: Mapped[str] = mapped_column(String(200), nullable=False, default="")
+    owner_id: Mapped[str] = mapped_column(String(32), nullable=False, default="", index=True)

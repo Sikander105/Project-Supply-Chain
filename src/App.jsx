@@ -1,6 +1,8 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AppLayout from './components/AppLayout'
+import RequireAuth from './components/RequireAuth'
 import DashboardPage from './pages/DashboardPage'
+import LoginPage from './pages/LoginPage'
 import NotFoundPage from './pages/NotFoundPage'
 import ProductsPage from './pages/ProductsPage'
 import PurchaseOrdersPage from './pages/PurchaseOrdersPage'
@@ -12,16 +14,20 @@ import WarehousesPage from './pages/WarehousesPage'
 export default function App() {
   return (
     <Routes>
-      <Route element={<AppLayout />}>
-        <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="products" element={<ProductsPage />} />
-        <Route path="vendors" element={<VendorsPage />} />
-        <Route path="warehouses" element={<WarehousesPage />} />
-        <Route path="purchase-orders" element={<PurchaseOrdersPage />} />
-        <Route path="shipments" element={<ShipmentsPage />} />
-        <Route path="reports" element={<ReportsPage />} />
-        <Route path="*" element={<NotFoundPage />} />
+      <Route path="/login" element={<LoginPage />} />
+
+      <Route element={<RequireAuth />}>
+        <Route element={<AppLayout />}>
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="products" element={<ProductsPage />} />
+          <Route path="vendors" element={<VendorsPage />} />
+          <Route path="warehouses" element={<WarehousesPage />} />
+          <Route path="purchase-orders" element={<PurchaseOrdersPage />} />
+          <Route path="shipments" element={<ShipmentsPage />} />
+          <Route path="reports" element={<ReportsPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
       </Route>
     </Routes>
   )

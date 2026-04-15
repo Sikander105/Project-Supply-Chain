@@ -29,3 +29,4 @@ class Product(Base):
     price: Mapped[float] = mapped_column(Float, nullable=False, default=0)
     reorder_level: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     warehouse_id: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    owner_id: Mapped[str] = mapped_column(String(32), nullable=False, default="", index=True)

@@ -121,17 +121,6 @@ export default function VendorsPage() {
     )
   }
 
-  if (!vendors || vendors.length === 0) {
-    return (
-      <div className="p-8">
-        <PageHeader title="Vendors" onAddClick={openCreateModal} />
-        <div className="text-center py-12">
-          <p className="text-gray-500">No vendors yet. Create one to get started.</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <section className="page">
       <PageHeader

@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom'
 import { NavLink } from 'react-router-dom'
 import { useInventory } from '../store/inventoryStore'
 import { useToast } from '../store/toastStore'
+import { useAuth } from '../store/authStore'
 
 const navItems = [
   {
@@ -110,14 +111,20 @@ function Sidebar() {
 
 function TopBar() {
   const now = new Date()
+  const { user, logout } = useAuth()
+
   return (
     <header className="topbar">
       <div>
         <p className="topbar__label">Operations Center</p>
         <h2 className="topbar__title">Supply Chain & Inventory Management</h2>
       </div>
-      <div className="topbar__meta">
+      <div className="topbar__meta" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
         <span>Last sync: {now.toLocaleTimeString()}</span>
+        <span>{user?.email}</span>
+        <button type="button" className="button button--ghost button--small" onClick={logout}>
+          Logout
+        </button>
       </div>
     </header>
   )

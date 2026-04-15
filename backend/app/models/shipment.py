@@ -31,3 +31,4 @@ class Shipment(Base):
     warehouse_id: Mapped[str] = mapped_column(String(64), nullable=False, default="")
     quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     received_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    owner_id: Mapped[str] = mapped_column(String(32), nullable=False, default="", index=True)

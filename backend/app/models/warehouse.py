@@ -24,3 +24,4 @@ class Warehouse(Base):
         nullable=False,
     )
     current_usage: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    owner_id: Mapped[str] = mapped_column(String(32), nullable=False, default="", index=True)

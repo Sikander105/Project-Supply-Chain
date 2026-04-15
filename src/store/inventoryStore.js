@@ -1,5 +1,6 @@
-import React, {
+import {
   createContext,
+  createElement,
   useCallback,
   useContext,
   useEffect,
@@ -7,6 +8,7 @@ import React, {
   useState,
 } from 'react'
 import { getInventoryValue, getLowStockProducts, getTotalStockUnits } from '../utils'
+import { useAuth } from './authStore'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'
 
@@ -20,55 +22,28 @@ const API_ENTITY_MAP = {
   'purchase-orders': 'purchase-orders',
 }
 
+const STORE_ENTITY_MAP = {
+  products: 'products',
+  vendors: 'vendors',
+  warehouses: 'warehouses',
+  shipments: 'shipments',
+  purchaseOrders: 'purchaseOrders',
+  purchase_orders: 'purchaseOrders',
+  'purchase-orders': 'purchaseOrders',
+}
+
 function toApiEntity(entity) {
   return API_ENTITY_MAP[entity] || entity
 }
 
+function toStoreEntity(entity) {
+  return STORE_ENTITY_MAP[entity] || entity
+}
+
 const InventoryContext = createContext(null)
 
-async function fetchFromApi(endpoint) {
-  try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`)
-    if (!response.ok) throw new Error(`API error: ${response.status}`)
-    return await response.json()
-  } catch (error) {
-    console.error(`Failed to fetch ${endpoint}:`, error)
-    return null
-  }
-}
-
-async function createItemApi(entity, payload) {
-  const apiEntity = toApiEntity(entity)
-  const response = await fetch(`${API_BASE_URL}/${apiEntity}/`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  })
-  if (!response.ok) throw new Error(`API error: ${response.status}`)
-  return await response.json()
-}
-
-async function updateItemApi(entity, id, payload) {
-  const apiEntity = toApiEntity(entity)
-  const response = await fetch(`${API_BASE_URL}/${apiEntity}/${id}`, {
-    method: 'PATCH', // not PUT
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  })
-  if (!response.ok) throw new Error(`API error: ${response.status}`)
-  return await response.json()
-}
-
-async function deleteItemApi(entity, id) {
-  const apiEntity = toApiEntity(entity)
-  const response = await fetch(`${API_BASE_URL}/${apiEntity}/${id}`, {
-    method: 'DELETE',
-  })
-  if (!response.ok) throw new Error(`API error: ${response.status}`)
-  return true
-}
-
 export function InventoryProvider({ children }) {
+  const { token } = useAuth()
   const [state, setState] = useState({
     products: [],
     vendors: [],
@@ -78,113 +53,150 @@ export function InventoryProvider({ children }) {
   })
   const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
-    async function loadAllData() {
-      setIsLoading(true)
-      const [products, vendors, warehouses, purchaseOrders, shipments] = await Promise.all([
-        fetchFromApi('/products/'),
-        fetchFromApi('/vendors/'),
-        fetchFromApi('/warehouses/'),
-        fetchFromApi('/purchase-orders/'),
-        fetchFromApi('/shipments/'),
-      ])
+  const authHeaders = useMemo(
+    () => (token ? { Authorization: `Bearer ${token}` } : {}),
+    [token],
+  )
 
+  const apiRequest = useCallback(
+    async (path, options = {}) => {
+      if (!token) throw new Error('Not authenticated')
+
+      const response = await fetch(`${API_BASE_URL}${path}`, {
+        ...options,
+        headers: {
+          ...(options.headers || {}),
+          ...authHeaders,
+        },
+      })
+
+      const data = await response.json().catch(() => null)
+      if (!response.ok) {
+        throw new Error(data?.detail || `Request failed (${response.status})`)
+      }
+      return data
+    },
+    [token, authHeaders],
+  )
+
+  useEffect(() => {
+    if (!token) {
       setState({
-        products: Array.isArray(products) ? products : [],
-        vendors: Array.isArray(vendors) ? vendors : [],
-        warehouses: Array.isArray(warehouses) ? warehouses : [],
-        purchaseOrders: Array.isArray(purchaseOrders) ? purchaseOrders : [],
-        shipments: Array.isArray(shipments) ? shipments : [],
+        products: [],
+        vendors: [],
+        warehouses: [],
+        purchaseOrders: [],
+        shipments: [],
       })
       setIsLoading(false)
+      return
     }
 
-    loadAllData()
-  }, [])
+    let cancelled = false
+    ;(async () => {
+      setIsLoading(true)
+      try {
+        const [products, vendors, warehouses, purchaseOrders, shipments] = await Promise.all([
+          apiRequest('/products/'),
+          apiRequest('/vendors/'),
+          apiRequest('/warehouses/'),
+          apiRequest('/purchase-orders/'),
+          apiRequest('/shipments/'),
+        ])
+        if (cancelled) return
+        setState({ products, vendors, warehouses, purchaseOrders, shipments })
+      } catch (e) {
+        console.error('Inventory load failed:', e)
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [token, apiRequest])
 
   const addItem = useCallback(
     async (entity, payload) => {
-      const result = await createItemApi(entity, payload)
-      if (result) {
-        setState((previous) => ({
-          ...previous,
-          [entity]: [result, ...previous[entity]],
-        }))
-        return result
-      }
-      return null
+      const apiEntity = toApiEntity(entity)
+      const storeEntity = toStoreEntity(entity)
+
+      const result = await apiRequest(`/${apiEntity}/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      setState((previous) => ({
+        ...previous,
+        [storeEntity]: [result, ...(previous[storeEntity] || [])],
+      }))
+      return result
     },
-    [],
+    [apiRequest],
   )
 
   const updateItem = useCallback(
     async (entity, id, payload) => {
-      const result = await updateItemApi(entity, id, payload)
-      if (result) {
-        setState((previous) => ({
-          ...previous,
-          [entity]: previous[entity].map((item) =>
-            item.id === id ? result : item,
-          ),
-        }))
-        return result
-      }
-      return null
+      const apiEntity = toApiEntity(entity)
+      const storeEntity = toStoreEntity(entity)
+
+      const result = await apiRequest(`/${apiEntity}/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      setState((previous) => ({
+        ...previous,
+        [storeEntity]: (previous[storeEntity] || []).map((item) =>
+          item.id === id ? result : item,
+        ),
+      }))
+      return result
     },
-    [],
+    [apiRequest],
   )
 
   const removeItem = useCallback(
     async (entity, id) => {
-      const success = await deleteItemApi(entity, id)
-      if (success) {
-        setState((previous) => ({
-          ...previous,
-          [entity]: previous[entity].filter((item) => item.id !== id),
-        }))
-      }
-      return success
+      const apiEntity = toApiEntity(entity)
+      const storeEntity = toStoreEntity(entity)
+
+      await apiRequest(`/${apiEntity}/${id}`, { method: 'DELETE' })
+
+      setState((previous) => ({
+        ...previous,
+        [storeEntity]: (previous[storeEntity] || []).filter((item) => item.id !== id),
+      }))
+      return true
     },
-    [],
+    [apiRequest],
   )
 
   const lookups = useMemo(() => {
-    const productById = Object.fromEntries(
-      state.products.map((product) => [product.id, product]),
-    )
-    const vendorById = Object.fromEntries(
-      state.vendors.map((vendor) => [vendor.id, vendor]),
-    )
-    const warehouseById = Object.fromEntries(
-      state.warehouses.map((warehouse) => [warehouse.id, warehouse]),
-    )
-
+    const productById = Object.fromEntries(state.products.map((x) => [x.id, x]))
+    const vendorById = Object.fromEntries(state.vendors.map((x) => [x.id, x]))
+    const warehouseById = Object.fromEntries(state.warehouses.map((x) => [x.id, x]))
     return { productById, vendorById, warehouseById }
   }, [state.products, state.vendors, state.warehouses])
 
   const summaries = useMemo(() => {
-    const totalProducts = state.products.length
-    const totalVendors = state.vendors.length
-    const totalWarehouses = state.warehouses.length
-    const totalPurchaseOrders = state.purchaseOrders.length
-    const totalShipments = state.shipments.length
     const pendingPurchaseOrders = state.purchaseOrders.filter(
       (order) => order.status === 'Pending',
     ).length
-    const totalStockUnits = getTotalStockUnits(state.products)
-    const totalInventoryValue = getInventoryValue(state.products)
-    const lowStockItems = getLowStockProducts(state.products).length
 
     return {
-      totalProducts,
-      totalVendors,
-      totalWarehouses,
-      totalPurchaseOrders,
-      totalShipments,
+      totalProducts: state.products.length,
+      totalVendors: state.vendors.length,
+      totalWarehouses: state.warehouses.length,
+      totalPurchaseOrders: state.purchaseOrders.length,
+      totalShipments: state.shipments.length,
       pendingPurchaseOrders,
-      totalStockUnits,
-      totalInventoryValue,
-      lowStockItems,
+      totalStockUnits: getTotalStockUnits(state.products),
+      totalInventoryValue: getInventoryValue(state.products),
+      lowStockItems: getLowStockProducts(state.products).length,
     }
   }, [state.products, state.vendors, state.warehouses, state.purchaseOrders, state.shipments])
 
@@ -201,13 +213,11 @@ export function InventoryProvider({ children }) {
     [state, isLoading, summaries, lookups, addItem, updateItem, removeItem],
   )
 
-  return React.createElement(InventoryContext.Provider, { value }, children)
+  return createElement(InventoryContext.Provider, { value }, children)
 }
 
 export function useInventory() {
   const context = useContext(InventoryContext)
-  if (!context) {
-    throw new Error('useInventory must be used inside InventoryProvider')
-  }
+  if (!context) throw new Error('useInventory must be used inside InventoryProvider')
   return context
 }
