@@ -71,6 +71,14 @@ Base path: `/api`
 * `POST /api/auth/register` — create a new user account
 * `POST /api/auth/login` — authenticate and receive access token
 
+### Using the API Docs
+
+To interact with protected endpoints in the API docs, authorization is required.
+
+1. Click **Authorize** in the docs UI
+2. Enter the same email and password used in the frontend app
+3. Submit to authenticate and enable access to secured routes
+
 ### Core Resources
 
 Each resource supports standard CRUD operations.
